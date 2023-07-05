@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory </title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container text-center">
+      <div class="row">
+          <div class="col-12">
+            <div class="bg"></div>
+            <div class="bg bg2"></div>
+            <div class="bg bg3"></div>
+          </div>
+      </div>
+      <div class="row"><h1>Memory</h1></div>
+      <div id="gameBoard" class="row">
+        <!-- The game board will be dynamically generated here -->
+      </div>
+      <button id="restartButton" class="btn btn-primary">Restart Game</button>
+    </div>
+  </body>
+</html>
+<style type="text/css">
+  body {
+    padding-top: 50px;
+  }
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: rgb(255 255 255 / 50%);
+    padding: 30px;
+    border-radius: 30px;
+  }
+  .card {
+    padding: 10px;
+    background-color: lightgoldenrodyellow;
+    border-radius: 15px;
+    cursor: pointer;
+    margin: 10px;
+    flex: 0 1 calc(25% - 20px);
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .card:after {
+    content: " ";
+    background-color: lightsalmon;
+    position: absolute;
+    left: -10%;
+    top: 10%;
+    opacity: 0.3;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    height: 150px;
+    width: 150px;
+    z-index: 1;
+    animation:cardAnimation 6s ease-in-out infinite alternate;
+  }
+  @keyframes cardAnimation {
+    0% {
+      transform:rotate(0deg);
+    }
+    100% {
+      transform:rotate(360deg);
+    }
+  }
+  .card .front {
+    font-size: 100px;
+    font-family: cursive;
+    z-index: 2;
+  }
+
+  .card .back {
+    display: none;
+    font-size: 100px;
+    font-family: cursive;
+    z-index: 2;
+  }
+
+  .card.flipped .front {
+    display: none;
+  }
+
+  .card.flipped .back {
+    display: block;
+  }
+
+  .card.NOmatched {
+    background-color: lightcoral;
+  }
+
+  .card.matched {
+    background-color: lightgreen;
+  }
+  .matched.card:after,
+  .NOmatched.card:after {
+    display: none;
+  }
+
+  #gameBoard {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  /*slider*/
+  .bg {
+    animation:slide 6s ease-in-out infinite alternate;
+    background-image: linear-gradient(-60deg, #222 50%, #313131 50%);
+    bottom:0;
+    left:-50%;
+    opacity:.5;
+    position:fixed;
+    right:-50%;
+    top:0;
+    z-index:-1;
+  }
+  
+  .bg2 {
+    animation-direction:alternate-reverse;
+    animation-duration:8s;
+  }
+  
+  .bg3 {
+    animation-duration:10s;
+  }
+  
+  @keyframes slide {
+    0% {
+      transform:translateX(-25%);
+    }
+    100% {
+      transform:translateX(25%);
+    }
+  }
+/*
+  @keyframes animateTexture {
+    0% {
+      background-position: 0 0;
+    }
+
+    100% {
+      background-position: 100% 100%;
+    }
+  }
+
+  body {
+    background: linear-gradient(45deg, lightgrey 25%, grey 25%, grey 50%, lightgrey 50%, lightgrey 75%, grey 75%);
+    background-size: 100px 100px;
+    animation: animateTexture 5s linear infinite;
+    padding-top: 20px;
+  }*/
+</style>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const cardValues = ["A", "A", "B", "B", "C", "C", "D", "D", "E", "E", "F", "F", "G", "G", "H", "H", "I", "I", "L", "L"];
+    let cardFlipped = false;
+    let lockBoard = false;
+    let firstCard, secondCard;
+    const gameBoard = document.getElementById("gameBoard");
+    const restartButton = document.getElementById("restartButton");
+    // Shuffle card values
+    cardValues.sort(() => 0.5 - Math.random());
+    // Create the game board
+    for (let i = 0; i < cardValues.length; i++) {
+      const card = document.createElement("div");
+      card.classList.add("col", "card");
+      card.dataset.value = cardValues[i];
+      const front = document.createElement("div");
+      front.classList.add("front");
+      front.textContent = "?";
+      const back = document.createElement("div");
+      back.classList.add("back");
+      back.textContent = cardValues[i];
+      card.appendChild(front);
+      card.appendChild(back);
+      gameBoard.appendChild(card);
+      // Add click event listener to each card
+      card.addEventListener("click", flipCard);
+    }
+    // Add click event listener to restart button
+    restartButton.addEventListener("click", restartGame);
+
+    function flipCard() {
+      if (lockBoard) return;
+      if (this === firstCard) return;
+      this.classList.add("flipped");
+      if (!cardFlipped) {
+        // First card flipped
+        cardFlipped = true;
+        firstCard = this;
+      } else {
+        // Second card flipped
+        cardFlipped = false;
+        secondCard = this;
+        checkMatch();
+      }
+    }
+
+    function checkMatch() {
+      if (firstCard.dataset.value === secondCard.dataset.value) {
+        // Cards match
+        firstCard.classList.add("matched");
+        secondCard.classList.add("matched");
+        disableCards();
+      } else {
+        // Cards don't match
+        lockBoard = true;
+        firstCard.classList.add("NOmatched");
+        secondCard.classList.add("NOmatched");
+        setTimeout(() => {
+          firstCard.classList.remove("flipped");
+          secondCard.classList.remove("flipped");
+          firstCard.classList.remove("NOmatched");
+          secondCard.classList.remove("NOmatched");
+          resetBoard();
+        }, 1000);
+      }
+    }
+
+    function disableCards() {
+      firstCard.removeEventListener("click", flipCard);
+      secondCard.removeEventListener("click", flipCard);
+      resetBoard();
+    }
+
+    function resetBoard() {
+      [cardFlipped, lockBoard] = [false, false];
+      [firstCard, secondCard] = [null, null];
+    }
+
+    function restartGame() {
+      gameBoard.innerHTML = "";
+      cardValues.sort(() => 0.5 - Math.random());
+      for (let i = 0; i < cardValues.length; i++) {
+        const card = document.createElement("div");
+        card.classList.add("col", "card");
+        card.dataset.value = cardValues[i];
+        const front = document.createElement("div");
+        front.classList.add("front");
+        front.textContent = "?";
+        const back = document.createElement("div");
+        back.classList.add("back");
+        back.textContent = cardValues[i];
+        card.appendChild(front);
+        card.appendChild(back);
+        gameBoard.appendChild(card);
+        card.addEventListener("click", flipCard);
+      }
+    }
+  });
+</script>
