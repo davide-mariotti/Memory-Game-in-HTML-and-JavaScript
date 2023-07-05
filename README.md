@@ -1,4 +1,4 @@
-# Memory-Game-in-HTML-and-JavaScript
+# Memory Game
 This is a simple memory game implemented using HTML, CSS, and JavaScript. The objective of the game is to find matching pairs of cards by flipping them over. It's a fun and challenging way to test and improve your memory skills.
 
 # How to Play
